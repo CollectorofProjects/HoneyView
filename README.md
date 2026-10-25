@@ -20,6 +20,16 @@ It **never executes captured commands**. The decoy shell is a deterministic pars
 
 The classifier cannot prove that an AI agent is involved. It distinguishes human-paced behavior from fast, bursty or automation-shaped behavior. Copy/paste, scripts, bots and AI agents can overlap.
 
+## Dashboard preview
+
+The screenshots below use synthetic activity and [documentation-only IP ranges](https://datatracker.ietf.org/doc/html/rfc5737). They do not contain real attacker data or credentials.
+
+![HoneyView dashboard populated with synthetic attack telemetry](docs/images/dashboard-overview.png)
+
+Select any captured session to review its command transcript, automation score, classification, and the signals which contributed to that score.
+
+![HoneyView session analysis panel with synthetic data](docs/images/session-analysis.png)
+
 ## One-command Ubuntu deployment
 
 After uploading the repository, the current `main` branch can be installed with:
