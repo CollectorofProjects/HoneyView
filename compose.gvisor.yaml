@@ -1,0 +1,5 @@
+# Optional stronger container isolation. Requires gVisor/runsc installed and
+# registered as a Docker runtime on the dedicated decoy VM.
+services:
+  honeyview:
+    runtime: runsc

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>HoneyView — Threat Operations</title>
+    <link rel="stylesheet" href="/assets/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <button class="menu-button" aria-label="Open navigation">☰</button>
+      <span class="mark">HV</span>
+      <nav aria-label="Breadcrumb"><span>Dashboard</span><b>Honeytrap</b></nav>
+      <div class="top-spacer"></div>
+      <div class="status"><i id="live-dot"></i><span id="live-state">Connecting</span><time id="clock"></time></div>
+    </header>
+
+    <section class="toolbar" aria-label="Dashboard controls">
+      <div class="tool-icon">⌕</div>
+      <input id="session-search" type="search" placeholder="Filter source IP or username">
+      <select id="class-filter" aria-label="Actor classification">
+        <option value="">All actors</option>
+        <option value="likely_automated">Likely automated</option>
+        <option value="likely_human">Likely human</option>
+        <option value="uncertain">Uncertain</option>
+        <option value="unknown">Unknown</option>
+      </select>
+      <select id="analytics-range" aria-label="Analysis time range">
+        <option value="24">Last 24 hours</option>
+        <option value="168">Last 7 days</option>
+        <option value="720">Last 30 days</option>
+      </select>
+      <span id="sensor-state" class="sensor-state checking"><i></i> Sensor checking</span>
+      <button id="sensor-toggle" class="sensor-toggle" disabled>Checking…</button>
+      <button id="refresh-dashboard">↻ Refresh</button>
+      <a class="button-link" href="/api/export/sessions.csv?hours=720">CSV</a>
+      <a class="button-link" href="/api/export/sessions.json?hours=720">JSON</a>
+    </section>
+
+    <main class="dashboard-grid">
+      <article class="panel attack-bar-panel">
+        <div class="panel-head"><h2>Activity volume</h2><span>All captured telemetry</span></div>
+        <div class="attack-bars">
+          <div class="attack-bar-row"><span class="bar-label red-dot">Commands</span><b id="bar-command-value">0</b></div>
+          <div class="horizontal-bar"><i id="command-bar"></i></div>
+          <div class="attack-bar-row"><span class="bar-label orange-dot">Authentication attempts</span><b id="bar-auth-value">0</b></div>
+          <div class="horizontal-bar auth"><i id="auth-bar"></i></div>
+        </div>
+      </article>
+
+      <article class="panel metric-panel">
+        <div class="panel-head"><h2>Attack snapshot</h2><span>Current totals</span></div>
+        <div class="metric-grid">
+          <div><strong class="red" id="metric-sessions">0</strong><span>Sessions</span></div>
+          <div><strong class="orange" id="metric-ips">0</strong><span>Source IPs</span></div>
+          <div><strong class="blue" id="metric-active">0</strong><span>Active now</span></div>
+          <div><strong class="purple" id="metric-automated">0</strong><span>Automated</span></div>
+        </div>
+      </article>
+
+      <article class="panel realtime-panel">
+        <div class="panel-head live-head">
+          <div><h2>Real-time command view</h2><span>Commands as attackers issue them</span></div>
+          <button id="pause-feed">Pause</button>
+        </div>
+        <div class="terminal-head"><span>TIME</span><span>SOURCE</span><span>COMMAND</span><span>AUTO</span></div>
+        <div id="command-feed" class="terminal" role="log" aria-live="polite">
+          <p class="empty">Waiting for attacker activity…</p>
+        </div>
+        <footer class="terminal-footer"><span><i></i> SSE stream connected</span><b id="metric-commands">0 commands captured</b></footer>
+      </article>
+
+      <article class="panel timeline-panel">
+        <div class="panel-head"><h2>Attack histogram</h2><span>Sessions per hour</span></div>
+        <div id="chart" class="timeline-chart" aria-label="Sessions during the selected period"></div>
+      </article>
+
+      <article class="panel distribution-panel">
+        <div class="panel-head"><h2>Actor classification</h2><span id="average-duration">avg. 0s/session</span></div>
+        <div class="distribution-body">
+          <div id="actor-donut" class="donut"><strong>0</strong><small>sessions</small></div>
+          <div id="actor-legend" class="legend"></div>
+        </div>
+      </article>
+
+      <article class="panel sources-panel">
+        <div class="panel-head"><h2>Top source IPs</h2><span>Sessions · commands</span></div>
+        <div id="top-sources" class="rank-list"></div>
+      </article>
+
+      <article class="panel users-panel">
+        <div class="panel-head"><h2>Targeted usernames</h2><span>Authentication attempts</span></div>
+        <div id="top-users" class="rank-list"></div>
+      </article>
+
+      <article class="panel indicators-panel">
+        <div class="panel-head"><h2>Behavior indicators</h2><span>Command signals</span></div>
+        <div id="indicators" class="indicator-grid"></div>
+      </article>
+
+      <article class="panel heatmap-panel">
+        <div class="panel-head"><h2>Honeypot activity heatmap</h2><span>UTC · day × hour</span></div>
+        <div id="heatmap" class="heatmap"></div>
+      </article>
+
+      <article class="panel commands-panel">
+        <div class="panel-head"><h2>Frequent commands</h2><span>Exact-match count</span></div>
+        <div id="top-commands" class="command-ranks"></div>
+      </article>
+
+      <article class="panel sessions-panel">
+        <div class="panel-head table-panel-head">
+          <div><h2>Captured sessions</h2><span>Click a row for command transcript and scoring evidence</span></div>
+          <b id="session-result-count">0 results</b>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Started</th><th>Source</th><th>User</th><th>Client</th><th>Commands</th><th>Automation</th><th>Status</th></tr></thead>
+            <tbody id="session-rows"></tbody>
+          </table>
+        </div>
+      </article>
+    </main>
+
+    <dialog id="session-dialog">
+      <button class="dialog-close" aria-label="Close">×</button>
+      <div id="session-detail"></div>
+    </dialog>
+    <script src="/assets/app.js" defer></script>
+  </body>
+</html>

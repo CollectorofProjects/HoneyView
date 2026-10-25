@@ -1,0 +1,52 @@
+services:
+  honeyview:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      HONEYVIEW_DATA_DIR: /data
+      HONEYVIEW_WEB_HOST: 0.0.0.0
+      HONEYVIEW_SSH_HOST: 0.0.0.0
+      HONEYVIEW_REQUIRE_EXPLICIT_SECRETS: "true"
+    ports:
+      - "${HONEYVIEW_PUBLIC_SSH_PORT:-2222}:2222"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - honeyview-data:/data
+    read_only: true
+    user: "10001:10001"
+    init: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 1.0
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 4096
+      nproc: 128
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 20s
+    networks:
+      decoy:
+        ipv4_address: 172.30.77.10
+
+volumes:
+  honeyview-data:
+
+networks:
+  decoy:
+    driver: bridge
+    enable_ipv6: false
+    ipam:
+      config:
+        - subnet: 172.30.77.0/24
